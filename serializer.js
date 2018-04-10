@@ -2,30 +2,74 @@ const OBJECT_ID = '___JEST__CSS__MATCH__SERIALIZER__OBJECT___'
 
 const chalk = require('chalk')
 
-function stringify ({selectors, children}, indent = '') {
+const identity = text => text
+
+const DEFAULT_TRANSFORMS = {
+  unmatched: identity,
+  matched: identity,
+  hash: identity
+}
+
+const SNAPSHOT_TRANSFORMS = {
+  unmatched: identity,
+  matched: (text) => chalk.underline(text),
+  hash: (text) => chalk.dim(text)
+}
+
+const SNAZZY_TRANSFORMS = {
+  unmatched: (text) => chalk.yellow(text),
+  matched: (text) => chalk.green.underline(text),
+  hash: (text) => chalk.dim(text)
+}
+
+/**
+ * @param {Object} transforms
+ * @param {Object} tree
+ * @param {Array<Object>} tree.selectors
+ * @param {Array<Object>} tree.children
+ * @param {String} indent
+ * @return {String}
+ */
+function stringify (transforms, {selectors, children}, indent) {
   let result = selectors.map(({mediaText, selector, hash}) => {
-    return `${indent}\n${formatSelector(mediaText, selector, hash, indent)}`
+    const formatted = formatSelector(transforms, mediaText, selector, hash, indent)
+    return `${indent}\n${formatted}`
   }).join('\n')
 
+  indent += '  '
   result += children.map(child => {
-    return `\n\n${stringify(child, `${indent}  `)}`
+    return `\n\n${stringify(child, transforms, indent)}`
   }).join('')
 
   return result
 }
 
-function formatSelector (mediaText, selectors, hash, indent) {
-  const selector = selectors.map(([unmatched, matched]) => {
-    let result = chalk.yellow(unmatched)
+stringify.DEFAULT_TRANSFORMS = DEFAULT_TRANSFORMS
+stringify.SNAPSHOT_TRANSFORMS = SNAPSHOT_TRANSFORMS
+stringify.SNAZZY_TRANSFORMS = SNAZZY_TRANSFORMS
+
+/**
+ * @param {Object} transforms
+ * @param {String} mediaText
+ * @param {Array<Array<String>>} selectors
+ * @param {String} hash
+ * @param {String} indent
+ * @return {String}
+ */
+function formatSelector (transforms, mediaText, selector, hash, indent) {
+  const fullSelector = selector.map(([unmatched, matched]) => {
+    let result = transforms.unmatched(unmatched)
     if (unmatched && matched) result += ' '
-    result += chalk.green.underline(matched)
+    result += transforms.matched(matched)
     return result
   }).join(', ')
 
-  return `${indent}${mediaText ? `${chalk.yellow(mediaText)}\n${indent}` : ''}${selector} ${chalk.dim(hash)}`
+  mediaText = mediaText ? `${transforms.unmatched(mediaText)}\n${indent}` : ''
+  return `${indent}${mediaText}${fullSelector} ${transforms.hash(hash)}`
 }
 
 /**
+ * Jest addSnapshotSerializer method
  * @param {*} value
  * @return {Boolean}
  */
@@ -34,12 +78,13 @@ function test (value) {
 }
 
 /**
- * @param {Object} value
+ * Jest addSnapshotSerializer method
+ * @param {Object} tree
  * @param {Function} serialize
  * @return {String}
  */
-function print (value, serialize) {
-  return serialize(`${OBJECT_ID}\n${stringify(value)}`)
+function print (tree, serialize) {
+  return `${OBJECT_ID}\n${stringify(SNAPSHOT_TRANSFORMS, tree, '')}`
 }
 
 module.exports = {
