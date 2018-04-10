@@ -1,0 +1,21 @@
+{
+  "name": "jest-css-match-serializer",
+  "version": "1.0.0",
+  "description": "Take snapshots of the CSS selectors that apply to an HTML snippet.",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && jest",
+    "lint": "standard"
+  },
+  "author": {
+    "name": "Matthew Armstrong",
+    "email": "raingerber2@gmail.com"
+  },
+  "dependencies": {
+    "chalk": "^2.3.2",
+    "find-all-matches": "git+https://github.com/raingerber/find-all-matches.git"
+  },
+  "devDependencies": {
+    "standard": "^11.0.1"
+  }
+}
