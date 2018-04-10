@@ -38,7 +38,7 @@ function stringify (transforms, {selectors, children}, indent) {
 
   indent += '  '
   result += children.map(child => {
-    return `\n\n${stringify(child, transforms, indent)}`
+    return `\n\n${stringify(transforms, child, indent)}`
   }).join('')
 
   return result
