@@ -84,7 +84,7 @@ function test (value) {
  * @return {String}
  */
 function print (tree, serialize) {
-  return `${OBJECT_ID}\n${stringify(SNAPSHOT_TRANSFORMS, tree, '')}`
+  return stringify(SNAPSHOT_TRANSFORMS, tree, '')
 }
 
 module.exports = {
