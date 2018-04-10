@@ -1,14 +1,13 @@
+# jest-css-match-serializer
+
+Take snapshots of the CSS selectors that apply to an HTML snippet or JSX element. Built using [find-all-matches](https://github.com/raingerber/find-all-matches).
+
 ## Example:
-https://github.com/raingerber/find-all-matches
+
 ```js
 const { serializer } = require('jest-css-match-serializer')
 
 expect.addSnapshotSerializer(serializer)
-
-// the serializer function takes 1..n objects that are
-// used to style a page in the internal puppeteer instance
-
-https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageaddstyletagoptions
 
 const getSelectors = serializer([{ path: './index.css' }])
 
@@ -52,8 +51,9 @@ it('works with jsx too (if React and ReactDom are available in the project)', ()
 })
 ```
 
-TODO add screenshots to show what the output actually looks like (matching selectors + changed snapshots)
+TODO add screenshots to show what the output looks like (matching selectors + changed snapshots)
 
+TODO explain what the hashes in the output are
 
 ## API
 
@@ -77,4 +77,4 @@ when this is **true**, we return matches for the child elements along with the t
 
 `serialize(html)`
 
-Takes JSX or an HTML string and returns an object with the selectors that match the given elements. The return value should not be used directly; it should be passed to `expect`, which will serialize the result for creating a snapshot.
+Takes JSX or an HTML string and returns an object with the selectors that match the given elements (this object is created by [find-all-matches](https://github.com/raingerber/find-all-matches)). The return value should not be used directly; it should be passed to `expect`, which will serialize the result for creating a snapshot.
