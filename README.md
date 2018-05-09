@@ -1,15 +1,17 @@
 # jest-css-match-serializer
 
-Take snapshots of the CSS selectors that apply to an HTML snippet or JSX element. Built using [find-all-matches](https://github.com/raingerber/find-all-matches).
+Take snapshots of the CSS selectors that apply to each element of an HTML snippet. Uses [find-all-matches](https://github.com/raingerber/find-all-matches).
+
+## Why?
+
+TODO
 
 ## Example:
 
 ```js
 const { serializer } = require('jest-css-match-serializer')
 
-expect.addSnapshotSerializer(serializer)
-
-const getSelectors = serializer([{ path: './index.css' }])
+const findMatches = serializer([{ path: './index.css' }], expect)
 
 /*
 index.css
@@ -31,7 +33,7 @@ index.css
 }
 */
 
-it('should make sure the selectors do not change', () => {
+it('should make sure the selectors do not change', async () => {
   const html = '<div class="a b"></div>'
 
   // the getSelectors function will find all the selectors
@@ -39,42 +41,102 @@ it('should make sure the selectors do not change', () => {
   // html fragment; in this example, the html matches the
   // selectors ".a", ".a.b", and ".a .b" (because it will
   // match that selector if it has a parent with ".a")
-  return getSelectors(html).then(selectors => {
-    expect(selectors).toMatchSnapshot()
-  })
+  const matches = await findMatches(html)
+  expect(matches).toMatchSnapshot()
 })
+```
 
-it('works with jsx too (if React and ReactDom are available in the project)', () => {
-  return getSelectors(<div className="a b" />).then(selectors => {
+## API
+
+TODO rename "serializer"
+
+`serializer(styles, [instanceOptions], [expect]) => findMatches`
+
+Returns the function that will create the snapshots
+
+**IMPORTANT:** if you don't pass `expect` as the third parameter, the returned function should be passed to [expect.addSnapshotSerializer](https://facebook.github.io/jest/docs/en/expect.html#expectaddsnapshotserializerserializer).
+
+
+```js
+// passing expect as the third parameter
+const findMatches = serializer(styles, options, expect)
+
+// is a shorter way of doing this
+const findMatches = serializer(styles, options)
+expect.addSnapshotSerializer(findMatches)
+```
+
+**styles**
+
+type: `string | object | array`
+
+Either a CSS string, object, or array of objects that each have a **url**, **path**, or **content** property. Objects are forwarded to [Puppeteer#addStyleTag](https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageaddstyletagoptions)
+
+**instanceOptions**
+
+type: `object`
+
+TODO
+
+**expect**
+
+Jest `expect` object, which is used to register the snapshot serializer
+
+`findMatch(html, [options])`
+
+Returns an object
+
+This function is returned by `serializer`. It takes an HTML string and returns the selectors that apply to each element. The return value should be passed to `expect`, which will create the snapshot.
+
+**html**
+
+type: `string`
+
+**options**
+
+type: `object`
+
+These are merged with the `instanceOptions`, and the result is passed to [find-all-matches](https://github.com/raingerber/find-all-matches).
+
+**options.recursive**
+
+**options.findPartialMatches**
+
+**options.formatSelector**
+
+**options.includeHtml**
+
+**options.includeCss**
+
+**options.includeCssHash**
+
+## React Example
+
+```js
+// helper.js
+
+const ReactDOMServer = require('react-dom/server')
+
+const { serializer } = require('jest-css-match-serializer')
+
+const getSelectors = serializer([{ path: './index.css' }])
+
+function getSelectorsFromJsx (jsx) {
+  return getSelectors(ReactDOMServer.renderToString(jsx))
+}
+
+export { serializer, getSelectorsFromJsx }
+
+// index.test.js
+
+import { serializer, getSelectorsFromJsx } from './helper'
+
+expect.addSnapshotSerializer(serializer)
+
+it('works with jsx too', () => {
+  const element = <div className="a b" />
+  return getSelectorsFromJsx(element).then(selectors => {
     expect(selectors).toMatchSnapshot()
   })
 })
 ```
-
-TODO add screenshots to show what the output looks like (matching selectors + changed snapshots)
-
-TODO explain what the hashes in the output are
-
-## API
-
-`serializer(styles, [options]) => serialize`
-
-Returns a serialize function
-
-NOTE: this function should also be passed to Jest's `expect.addSnapshotSerializer` to register the serializer
-
-**styles**
-
-an array of objects, where each object has a `url`, `path`, or `content` key. These objects are forwarded to [Puppeteer#addStyleTag](https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageaddstyletagoptions)
-
-**options**
-
-optional config
-
-**options.recursive**
-
-when this is **true**, we return matches for the child elements along with the top-level element
-
-`serialize(html)`
-
-Takes JSX or an HTML string and returns an object with the selectors that match the given elements (this object is created by [find-all-matches](https://github.com/raingerber/find-all-matches)). The return value should not be used directly; it should be passed to `expect`, which will serialize the result for creating a snapshot.

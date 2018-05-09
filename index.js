@@ -1,62 +1,96 @@
-const {getMatchingSelectors} = require('find-all-matches')
+const os = require('os')
+const chalk = require('chalk') // TODO use chalk more
+const objectHash = require('object-hash')
+const {findMatches} = require('/Users/matthewarmstrong/Desktop/projects/find-css-matches/dist/index.cjs.js')
 
-const {OBJECT_ID, stringify, test, print} = require('./serializer')
+const INDENTATION = '  '
 
-let ReactDOMServer
+const OBJECT_ID = '___JEST__CSS__MATCH__SERIALIZER__OBJECT___'
 
-try {
-  ReactDOMServer = require('react-dom/server')
-} catch (e) {
-  ReactDOMServer = {renderToString: input => input}
-}
+const formatSelector = (a, b) => [a, b ? `???${b}???` : b]
 
-/**
- * @param {Object} instanceOptions
- * @param {Object} localOptions
- * @return {Object}
- */
-function getOptions (instanceOptions, localOptions) {
-  let {recursive} = localOptions
-  if (typeof recursive === 'undefined') {
-    recursive = !!instanceOptions.recursive
-  } else {
-    recursive = !!recursive
-  }
+const cssHashFormatter = (cssArray, indent) => chalk.dim(`${indent}${objectHash(cssArray)}`)
 
-  return {recursive}
-}
+const cssListFormatter = (cssArray, indent) => chalk.dim(`${indent}${cssArray.join(`${os.EOL}${indent}`)}`)
 
 /**
- * @param {Array<Object>} styles
- * @param {Object} instanceOptions
- * @return {Function}
+ * stringifies an object from find-css-matches
+ * @param {Object} param0
+ * @param {Array<Object>} param0.matches
+ * @param {Array<Object>} param0.children
+ * @param {Object} options
+ * @param {Function} options.formatCss
+ * @param {String} indent
  */
-function serializer (styles, instanceOptions = {}) {
-  /**
-   * @param {String|ReactComponent} source
-   * @return {Array}
-   */
-  async function parse (source, localOptions = {}) {
-    let html = source
-    if (typeof html !== 'string') {
-      html = ReactDOMServer.renderToString(html)
+function stringify ({html, matches, children}, options, indent = '') {
+  let result = html ? `${indent}${html}${os.EOL}` : ''
+  result += matches.map(({selector, mediaText, css}) => {
+    let str = `${indent}${selector}`
+    if (mediaText) {
+      str += `${os.EOL}${indent}${mediaText}`
     }
 
-    const options = getOptions(instanceOptions, localOptions)
-    const result = await getMatchingSelectors(html, styles, options)
-    Object.defineProperty(result, OBJECT_ID, {value: true})
-    return result
+    if (css && options.formatCss) {
+      str += `${os.EOL}${options.formatCss(css, indent)}`
+    }
+
+    return str
+  }).join(os.EOL)
+
+  indent += INDENTATION
+  result += children.map(child => { // TODO add index? maybe just do that if html is not there
+    return `${os.EOL}${os.EOL}${stringify(child, options, indent)}`
+  }).join('')
+
+  return result
+}
+
+/**
+ * @param {Array|String|Object} styles
+ * @param {Object} instanceOptions
+ * @param {Object} expect
+ * @returns {Function}
+ */
+function serializer (styles, instanceOptions, expect) {
+  /**
+   * @param {String} html
+   * @param {Object} localOptions
+   * @returns {Array}
+   */
+  async function findMatchesForSnapshot (html, localOptions) {
+    const options = Object.assign({formatSelector}, instanceOptions, localOptions)
+
+    let formatCss
+    if (options.includeCssHash === true) {
+      formatCss = cssHashFormatter
+      options.includeCss = true
+    } else if (options.includeCss === true) {
+      formatCss = cssListFormatter
+    }
+
+    // TODO how should we format really long selectors?
+    // TODO if a selector uses commas, put each part on a separate line
+    const matches = await findMatches(styles, html, options)
+    const value = stringify(matches, {formatCss}, '')
+    return {value, [OBJECT_ID]: true}
   }
 
-  parse.test = test
-  parse.print = print
-  return parse
+  findMatchesForSnapshot.test = test
+  findMatchesForSnapshot.print = ({value}, serialize) => value
+
+  if (expect && typeof expect.addSnapshotSerializer === 'function') {
+    expect.addSnapshotSerializer(findMatchesForSnapshot)
+  }
+
+  return findMatchesForSnapshot
 }
 
-serializer.test = test
-serializer.print = print
-
-module.exports = {
-  stringify,
-  serializer
+/**
+ * @param {*} value
+ * @returns {Boolean}
+ */
+function test (value) {
+  return !!value && typeof value === 'object' && value[OBJECT_ID] === true
 }
+
+module.exports = serializer
