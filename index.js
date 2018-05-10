@@ -1,6 +1,6 @@
 const objectHash = require('object-hash')
 const underline = require('ansi-underline')
-const {findMatches} = require('../find-css-matches/dist/index.cjs.js')
+const {findMatches} = require('find-css-matches')
 
 const INDENTATION = '  '
 
