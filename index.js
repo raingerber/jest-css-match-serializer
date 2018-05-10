@@ -1,78 +1,96 @@
-const chalk = require('chalk') // TODO remove chalk
 const objectHash = require('object-hash')
+const underline = require('ansi-underline')
 const {findMatches} = require('../find-css-matches/dist/index.cjs.js')
 
 const INDENTATION = '  '
 
-// TODO find a better name
-const OBJECT_ID = '___JEST__CSS__MATCH__SERIALIZER__OBJECT___'
+const SERIALIZER_ID = '___JEST__CSS__MATCH__SERIALIZER__OBJECT___'
 
-const OPTIONS_FOR_FIND_CSS_MATCHES = [
-  'findPartialMatches',
+const OPTIONS_KEY_ARRAY = [
   'recursive',
   'includeHtml',
-  'includeCss'
+  'includeCss',
+  'includePartialMatches'
 ]
 
-const pick = (keys, obj) => keys.reduce((acc, key) => {
-  if (obj[key] !== undefined) {
-    acc[key] = obj[key]
-  }
+const formatSelector = (a, b) => [a, b ? underline(b) : b]
 
-  return acc
-}, {})
+const cssHashFormatter = (cssArray, indent) => `${indent}${objectHash(cssArray)}`
 
-const formatSelector = (a, b) => [a, b ? chalk.underline(b) : b]
+const cssListFormatter = (cssArray, indent) => `${indent}${cssArray.join(`\n${indent}`)}`
 
-const cssHashFormatter = (cssArray, indent) => {
-  return `${indent}${chalk.dim(objectHash(cssArray))}`
-}
+/**
+ * @param {Array<String>} keys
+ * @param {Object} obj
+ * @returns {Object}
+ */
+function pick (keys, obj) {
+  return keys.reduce((acc, key) => {
+    if (obj[key] !== undefined) {
+      acc[key] = obj[key]
+    }
 
-const cssListFormatter = (cssArray, indent) => {
-  return `${indent}${cssArray.map(css => chalk.dim(css)).join(`\n${indent}`)}`
+    return acc
+  }, {})
 }
 
 /**
  * stringifies an object from find-css-matches
  * @param {Object} param0
+ * @param {String} param0.html
  * @param {Array<Object>} param0.matches
  * @param {Array<Object>} param0.children
  * @param {Object} options
  * @param {Function} options.formatCss
  * @param {String} indent
+ * @returns {String}
  */
-function stringify ({html, matches, children}, options, indent = '') {
-  let result = html ? `${indent}${html}\n` : ''
+function stringify ({html, matches, children = []}, options, indent = '') {
+  const isRoot = indent === ''
+
+  let result = ''
+  if (isRoot) {
+    result += '[0]\n'
+  }
+
+  if (html) {
+    result += `${indent}${html}\n`
+  }
+
   if (matches.length) {
     result += matches.map(({selector, mediaText, css}) => {
-      // split the selector into separate lines
-      let str = `${indent}${selector.replace(/,\s*/g, `,\n${indent}`)}`
+      // split the selector into separate lines for each comma
+      let str = `${indent}${selector.replace(/,\s*/g, `,\n${indent}`)}\n`
       if (mediaText) {
-        str += `\n${indent}@media ${mediaText}`
+        str += `${indent}@media ${mediaText}\n`
       }
 
       if (css && options.formatCss) {
-        str += `\n${options.formatCss(css, indent)}`
+        str += `${options.formatCss(css, indent)}\n`
       }
 
       return str
     }).join('\n')
   } else {
-    result += `${indent}<NULL>` // TODO mention this in the readme
+    result += `${indent}<NULL>\n`
   }
 
-  indent += INDENTATION
-  if (children) {
-    result += children.map((child, index) => {
-      return `\n${indent}${index}\n${stringify(child, options, indent)}`
-    }).join('')
+  if (children.length) {
+    indent += INDENTATION
+    result += '\n' + children.map((child, index) => {
+      return `${indent}[${index}]\n${stringify(child, options, indent)}`
+    }).join('\n')
+  }
+
+  if (isRoot) {
+    result = result.replace(/\n$/, '')
   }
 
   return result
 }
 
 /**
- * @param {Array|String|Object} styles
+ * @param {String|Object|Array<Object>} styles
  * @param {Object} instanceOptions
  * @param {Object} expect
  * @returns {Function}
@@ -85,9 +103,10 @@ function serializer (styles, instanceOptions, expect) {
    */
   async function findMatchesForSnapshot (html, localOptions) {
     const userOptions = Object.assign({}, instanceOptions, localOptions)
-    const options = pick(OPTIONS_FOR_FIND_CSS_MATCHES, userOptions)
-
-    options.formatSelector = formatSelector
+    const options = pick(OPTIONS_KEY_ARRAY, userOptions)
+    if (options.includePartialMatches) {
+      options.formatSelector = formatSelector
+    }
 
     let formatCss
     if (userOptions.includeCssHash === true) {
@@ -99,7 +118,7 @@ function serializer (styles, instanceOptions, expect) {
 
     const matches = await findMatches(styles, html, options)
     const value = stringify(matches, {formatCss}, '')
-    return {value, [OBJECT_ID]: true}
+    return {value, [SERIALIZER_ID]: true}
   }
 
   findMatchesForSnapshot.test = test
@@ -117,7 +136,7 @@ function serializer (styles, instanceOptions, expect) {
  * @returns {Boolean}
  */
 function test (value) {
-  return !!value && typeof value === 'object' && value[OBJECT_ID] === true
+  return !!value && typeof value === 'object' && value[SERIALIZER_ID] === true
 }
 
 module.exports = serializer

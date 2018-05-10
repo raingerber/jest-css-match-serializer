@@ -2,8 +2,7 @@
 
 const serializerFactory = require('./index')
 
-describe('testing the different options', () => {
-  // TODO test <html>, <head>, and <body> tags
+describe('test with different option combinations', () => {
   const styles = `
     ${/* full match */''}
     #container {
@@ -17,12 +16,13 @@ describe('testing the different options', () => {
     ${/* each part of the selector will be on a separate line
          in the snapshot; some of them are partial matches */''}
     ul li.aa,
-    body > section > #container li.bb,
-    #container > div > ul > li:not(li) {
+    body > section li.bb,
+    #container li:not(li) {
       opacity: .5;
     }
     ${/* should have a mediaText property in the snapshot */''}
     @media (max-width: 599px) {
+      ul,
       li + li:nth-child(2n) {
         font-size: 12px;
         padding: 20px;
@@ -34,18 +34,21 @@ describe('testing the different options', () => {
     <div id="container">
       <div class="xx">
         <ul class="yy">
-          <li class="aa">one</li>
-          <li class="bb">two</li>
+          <li class="aa"></li>
+          <li class="bb">
+            <span>no css for me</span>
+          </li>
+          <li class="cc"></li>
         </ul>
-      <div>
+      </div>
     </div>
   `
   const options = {
     recursive: false,
-    findPartialMatches: false,
     includeHtml: false,
     includeCss: false,
-    includeCssHash: false
+    includeCssHash: false,
+    includePartialMatches: false
   }
   const findMatches = serializerFactory(styles, options, expect)
   function executeFindMatchesTest (message, options) {
@@ -65,10 +68,10 @@ describe('testing the different options', () => {
   )
   // using "recursive" so the snapshots will have more data
   executeFindMatchesTest(
-    'findPartialMatches === true',
+    'includePartialMatches === true',
     {
       recursive: true,
-      findPartialMatches: true
+      includePartialMatches: true
     }
   )
   executeFindMatchesTest(
@@ -85,7 +88,6 @@ describe('testing the different options', () => {
       includeCss: true
     }
   )
-  // the next two snapshots should be the same
   executeFindMatchesTest(
     'includeCssHash === true',
     {

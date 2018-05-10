@@ -4,18 +4,28 @@
   "description": "Take snapshots of the CSS selectors that apply to an HTML snippet.",
   "main": "index.js",
   "scripts": {
-    "test": "standard && jest",
-    "lint": "standard"
+    "test": "standard && jest"
   },
+  "keywords": [
+    "css",
+    "jest"
+  ],
   "author": {
     "name": "Matthew Armstrong",
     "email": "raingerber2@gmail.com"
   },
+  "license": "ISC",
   "dependencies": {
-    "chalk": "^2.3.2",
-    "find-all-matches": "git+https://github.com/raingerber/find-all-matches.git"
+    "ansi-underline": "^0.1.1",
+    "object-hash": "^1.3.0"
   },
   "devDependencies": {
+    "jest": "^22.4.3",
     "standard": "^11.0.1"
+  },
+  "files": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/raingerber/jest-css-match-serializer"
   }
 }
