@@ -1,20 +1,27 @@
 {
   "name": "jest-css-match-serializer",
   "version": "1.0.0",
-  "description": "Take snapshots of the CSS selectors that apply to an HTML snippet.",
+  "description": "Take snapshots of the CSS that applies to an HTML snippet.",
   "main": "index.js",
   "scripts": {
     "test": "standard && jest"
   },
   "keywords": [
     "css",
-    "jest"
+    "selector",
+    "match",
+    "jest",
+    "snapshot",
+    "serializer"
   ],
   "author": {
     "name": "Matthew Armstrong",
     "email": "raingerber2@gmail.com"
   },
   "license": "ISC",
+  "engines": {
+    "node": ">= 8.6.0"
+  },
   "dependencies": {
     "ansi-underline": "^0.1.1",
     "object-hash": "^1.3.0"
@@ -23,7 +30,9 @@
     "jest": "^22.4.3",
     "standard": "^11.0.1"
   },
-  "files": [],
+  "files": [
+    "index.js"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/raingerber/jest-css-match-serializer"
