@@ -1,66 +1,76 @@
 # jest-css-match-serializer
 
-Take snapshots of the CSS selectors that apply to each element of an HTML snippet. Uses [find-css-matches](https://github.com/raingerber/find-css-matches).
+Take snapshots of the CSS that applies to an HTML snippet. Uses [find-css-matches](https://github.com/raingerber/find-css-matches).
 
 ## Why?
 
-HTML and CSS have a fragile relationship. Small changes to either one can inadvertently change the styling, often in places you didn't expect or intend.
+HTML and CSS have a fragile relationship. Changing either one can have unexpected results, and modifying a selector is perilous when you're not sure what HTML it's targeting.
+
+By using `jest-css-match-serializer`, you can monitor these changes more effectively:
+
+1. When you change a selector, know what elements were targeted before and after the change
+
+2. When you change the CSS within a selector, know what elements were affected
+
+3. When you change some HTML, know if that changed the applicable selectors
 
 ## Example:
 
 ```js
 const serializerFactory = require('jest-css-match-serializer')
 
-const css = `
-  .b {
+const styles = `
+  .parent {
     color: blue;
   }
-
-  .a .b {
+  .parent .child {
     color: purple;
   }
-
-  .c {
-    color: red;
+  .parent .child + .child {
+    color: green;
   }
 `
 
+const html = `
+  <div class="parent">
+    <div class="child">one</div>
+    <div class="child">two</div>
+  </div>
+`
+
 const options = {
-  findPartialMatches: true
+  recursive: true,
+  includePartialMatches: false
 }
 
-const findMatches = serializerFactory(css, options, expect)
 
-// the findMatches function will find all the selectors
-// from index.css that could potentially match the given 
-// html fragment; in this example, the html matches the
-// selectors ".a", ".a.b", and ".a .b" (because it will
-// match that selector if it has a parent with ".a")
+const findMatches = serializerFactory(styles, options, expect)
 
-it('should make sure the selectors do not change', async () => {
-  const html = '<div class="b"></div>'
-  const matches = await findMatches(html)
-  expect(matches).toMatchSnapshot()
+it('should verify the selectors did not change', async () => {
+  expect(await findMatches(html)).toMatchSnapshot()
 })
+```
 
-it('should make sure the selectors do not change', () => {
-  const html = '<div class="b"></div>'
-  return findMatches(html).then(matches => {
-    expect(matches).toMatchSnapshot()
-  })
-})
+**snapshot:**
 
-// TODO add the snapshot
+```
+[0]
+.parent
 
+  [0]
+  .parent .child
+
+  [1]
+  .parent .child
+
+  .parent .child + .child
 ```
 
 ## API
 
-TODO rename "serializer"
+## serializerFactory(styles, [instanceOptions], [expect]) => Function
 
-## serializerFactory(styles, [instanceOptions], [expect]) => findMatches
-
-Returns the function that will create the snapshots
+Returns a `findMatches` function for creating snapshots
 
 **styles**
 
@@ -72,11 +82,11 @@ Either a CSS string, object, or array of objects that each have a **url**, **pat
 
 type: `object`
 
-TODO
+See the `findMatches#options` description
 
 **expect**
 
-Jest's `expect` object, which is used to register the serializer. Alternatively, you can omit this parameter and manually call [expect.addSnapshotSerializer](https://facebook.github.io/jest/docs/en/expect.html#expectaddsnapshotserializerserializer) with the returned function. This can be useful if you create `findMatches` in a separate file:
+Jest's `expect` object, which is used to register the serializer. Alternatively, you can omit this parameter and call [expect.addSnapshotSerializer](https://facebook.github.io/jest/docs/en/expect.html#expectaddsnapshotserializerserializer) with the returned function. This can be helpful if you export `findMatches` for use in separate files:
 
 `test-utils.js`
 
@@ -84,16 +94,12 @@ Jest's `expect` object, which is used to register the serializer. Alternatively,
 const serializerFactory = require('jest-css-match-serializer')
 
 const styles = [
-   { path: './local-stylesheet.css' },
-   { url: 'www.files.com/remote-stylesheet.css' },
-   { content: '.random-css { color: green; }' }
+   { path: './styles.css' },
+   { url: 'www.files.com/styles.css' },
+   { content: '.other-css { color: green; }' }
 ]
 
-const options = { recursive: true }
-
-// we don't pass "expect" to the factory function,
-// because we're using the function in a separate file
-// (which is going to have a different expect object)
+// not passing "expect" to the factory function
 const findMatches = serializerFactory(styles, options)
 
 module.exports = { findMatches }
@@ -107,16 +113,14 @@ const { findMatches } = require('./test-utils')
 // register the serializer
 expect.addSnapshotSerializer(findMatches)
 
-it('can now use the findMatch serializer', () => {
-  expect(findMatches('<div></div>')).toMatchSnapshot()
+it('can now use the css match serializer', async () => {
+  expect(await findMatches('<div></div>')).toMatchSnapshot()
 })
 ```
 
-## findMatch(html, [options])
+## findMatches(html, [options]) => Object
 
-Returns an object
-
-This function is returned by `serializer`. It takes an HTML string and returns the selectors that apply to each element. The return value should be passed to `expect`, which will create the snapshot.
+Async function that's returned by `serializerFactory`. It takes an HTML string and returns the selectors that apply to each element (if no selectors apply, the snapshot will contain `<NULL>`). To create the snapshot, the `findMatches` return value should be passed to `expect`.
 
 **html**
 
@@ -126,40 +130,97 @@ type: `string`
 
 type: `object`
 
-These are merged with the `instanceOptions`, and the result is passed to [find-css-matches](https://github.com/raingerber/find-css-matches).
+These are merged into the `instanceOptions`, and the result is passed to [find-css-matches](https://github.com/raingerber/find-css-matches).
 
-**options.findPartialMatches**
+**options.includePartialMatches**
+
+type: `boolean`
+
+default: `true`
+
+Include [partial matches](https://github.com/raingerber/find-css-matches#partial-matching).
 
 **options.recursive**
 
+type: `boolean`
+
+default: `true`
+
+Include matches for the child elements. In the snapshot, each child is preceded by its index.
+
 **options.includeHtml**
+
+type: `boolean`
+
+default: `false`
+
+Include an HTML string for each element that's visited.
+
+```
+[0]
+<div class="parent">
+.parent
+
+  [0]
+  <div class="child">
+  .parent .child
+```
 
 **options.includeCss**
 
+type: `boolean`
+
+default: `false`
+
+Include the CSS declarations for each matching selector. If any declaration changes for a selector, you will know exactly what changed.
+
+```
+[0]
+.parent
+color: blue
+
+  [0]
+  .parent .child
+  color: purple
+```
+
 **options.includeCssHash**
+
+type: `boolean`
+
+default: `false`
+
+Include a hash for the CSS in each selector. This option is more concise than `includeCss` (which it overrides), but it gives you less information. You will know when the CSS changes for an element, but you won't know the declarations that changed. Uses [object-hash](https://www.npmjs.com/package/object-hash).
+
+```
+[0]
+.parent
+cdb0a17684dda4bd0f66b197b66ded10088f867c
+
+  [0]
+  .parent .child
+  d080809f96f43a17d2441766c5d230c2152567e5
+```
 
 ## React Example
 
 ```js
-// helper.js
-
 const ReactDOMServer = require('react-dom/server')
 
-const { serializer } = require('jest-css-match-serializer')
+const serializerFactory = require('jest-css-match-serializer')
 
-const styles = [{ path: './index.css' }]
+const { TabComponent } = require('./TabComponent')
 
-const options = {}
+const styles = { path: './tab.css' }
 
-const findMatches = serializer(styles, options, expect)
+const findMatches = serializerFactory(styles, {}, expect)
 
 function findMatchesFromJsx (jsx) {
   return findMatches(ReactDOMServer.renderToString(jsx))
 }
 
 it('works with jsx too', async () => {
-  const element = <div className="a b" />
-  const matches = await findMatchesFromJsx(element)
+  const matches = await findMatchesFromJsx(<TabComponent />)
   expect(matches).toMatchSnapshot()
 })
 ```
