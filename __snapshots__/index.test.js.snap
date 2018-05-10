@@ -1,0 +1,111 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`testing the different options all options === false 1`] = `[4m#container[24m`;
+
+exports[`testing the different options findPartialMatches === true 1`] = `
+[4m#container[24m
+#container-container > [4m#container[24m
+  0
+  <NULL>
+    0
+    <NULL>
+      0
+      [4mul li.aa[24m,
+      body > section > #container li.bb,
+      #container > div > ul > li:not(li)
+      1
+      ul li.aa,
+      body > section > [4m#container li.bb[24m,
+      #container > div > ul > li:not(li)
+      [4mli + li:nth-child(2n)[24m
+      @media (max-width: 599px)
+    1
+    <NULL>
+`;
+
+exports[`testing the different options includeCss === true 1`] = `
+[4m#container[24m
+[2mcolor: magenta[22m
+  0
+  <NULL>
+    0
+    <NULL>
+      0
+      [4mul li.aa[24m,
+      body > section > #container li.bb,
+      #container > div > ul > li:not(li)
+      [2mopacity: 0.5[22m
+      1
+      [4mli + li:nth-child(2n)[24m
+      @media (max-width: 599px)
+      [2mfont-size: 12px[22m
+      [2mpadding: 20px[22m
+      [2mmargin: 30px[22m
+    1
+    <NULL>
+`;
+
+exports[`testing the different options includeCssHash === true 1`] = `
+[4m#container[24m
+[2md762aa12d08b3083a1858ba276434c8b530f6152[22m
+  0
+  <NULL>
+    0
+    <NULL>
+      0
+      [4mul li.aa[24m,
+      body > section > #container li.bb,
+      #container > div > ul > li:not(li)
+      [2m9149f5d9b4b160f75887e39c88e901e4b65ba5be[22m
+      1
+      [4mli + li:nth-child(2n)[24m
+      @media (max-width: 599px)
+      [2m156afd3684d85b72cc907c7cc497f1ead048791b[22m
+    1
+    <NULL>
+`;
+
+exports[`testing the different options includeHtml === true 1`] = `
+<div id="container">
+[4m#container[24m
+  0
+  <div class="xx">
+  <NULL>
+    0
+    <ul class="yy">
+    <NULL>
+      0
+      <li class="aa">
+      [4mul li.aa[24m,
+      body > section > #container li.bb,
+      #container > div > ul > li:not(li)
+      1
+      <li class="bb">
+      [4mli + li:nth-child(2n)[24m
+      @media (max-width: 599px)
+    1
+    <div>
+    <NULL>
+`;
+
+exports[`testing the different options options.includeCssHash takes precedence over options.includeCss 1`] = `
+[4m#container[24m
+[2md762aa12d08b3083a1858ba276434c8b530f6152[22m
+`;
+
+exports[`testing the different options recursive === true 1`] = `
+[4m#container[24m
+  0
+  <NULL>
+    0
+    <NULL>
+      0
+      [4mul li.aa[24m,
+      body > section > #container li.bb,
+      #container > div > ul > li:not(li)
+      1
+      [4mli + li:nth-child(2n)[24m
+      @media (max-width: 599px)
+    1
+    <NULL>
+`;

@@ -1,17 +1,36 @@
-const os = require('os')
-const chalk = require('chalk') // TODO use chalk more
+const chalk = require('chalk') // TODO remove chalk
 const objectHash = require('object-hash')
-const {findMatches} = require('/Users/matthewarmstrong/Desktop/projects/find-css-matches/dist/index.cjs.js')
+const {findMatches} = require('../find-css-matches/dist/index.cjs.js')
 
 const INDENTATION = '  '
 
+// TODO find a better name
 const OBJECT_ID = '___JEST__CSS__MATCH__SERIALIZER__OBJECT___'
 
-const formatSelector = (a, b) => [a, b ? `???${b}???` : b]
+const OPTIONS_FOR_FIND_CSS_MATCHES = [
+  'findPartialMatches',
+  'recursive',
+  'includeHtml',
+  'includeCss'
+]
 
-const cssHashFormatter = (cssArray, indent) => chalk.dim(`${indent}${objectHash(cssArray)}`)
+const pick = (keys, obj) => keys.reduce((acc, key) => {
+  if (obj[key] !== undefined) {
+    acc[key] = obj[key]
+  }
 
-const cssListFormatter = (cssArray, indent) => chalk.dim(`${indent}${cssArray.join(`${os.EOL}${indent}`)}`)
+  return acc
+}, {})
+
+const formatSelector = (a, b) => [a, b ? chalk.underline(b) : b]
+
+const cssHashFormatter = (cssArray, indent) => {
+  return `${indent}${chalk.dim(objectHash(cssArray))}`
+}
+
+const cssListFormatter = (cssArray, indent) => {
+  return `${indent}${cssArray.map(css => chalk.dim(css)).join(`\n${indent}`)}`
+}
 
 /**
  * stringifies an object from find-css-matches
@@ -23,24 +42,31 @@ const cssListFormatter = (cssArray, indent) => chalk.dim(`${indent}${cssArray.jo
  * @param {String} indent
  */
 function stringify ({html, matches, children}, options, indent = '') {
-  let result = html ? `${indent}${html}${os.EOL}` : ''
-  result += matches.map(({selector, mediaText, css}) => {
-    let str = `${indent}${selector}`
-    if (mediaText) {
-      str += `${os.EOL}${indent}${mediaText}`
-    }
+  let result = html ? `${indent}${html}\n` : ''
+  if (matches.length) {
+    result += matches.map(({selector, mediaText, css}) => {
+      // split the selector into separate lines
+      let str = `${indent}${selector.replace(/,\s*/g, `,\n${indent}`)}`
+      if (mediaText) {
+        str += `\n${indent}@media ${mediaText}`
+      }
 
-    if (css && options.formatCss) {
-      str += `${os.EOL}${options.formatCss(css, indent)}`
-    }
+      if (css && options.formatCss) {
+        str += `\n${options.formatCss(css, indent)}`
+      }
 
-    return str
-  }).join(os.EOL)
+      return str
+    }).join('\n')
+  } else {
+    result += `${indent}<NULL>` // TODO mention this in the readme
+  }
 
   indent += INDENTATION
-  result += children.map(child => { // TODO add index? maybe just do that if html is not there
-    return `${os.EOL}${os.EOL}${stringify(child, options, indent)}`
-  }).join('')
+  if (children) {
+    result += children.map((child, index) => {
+      return `\n${indent}${index}\n${stringify(child, options, indent)}`
+    }).join('')
+  }
 
   return result
 }
@@ -58,18 +84,19 @@ function serializer (styles, instanceOptions, expect) {
    * @returns {Array}
    */
   async function findMatchesForSnapshot (html, localOptions) {
-    const options = Object.assign({formatSelector}, instanceOptions, localOptions)
+    const userOptions = Object.assign({}, instanceOptions, localOptions)
+    const options = pick(OPTIONS_FOR_FIND_CSS_MATCHES, userOptions)
+
+    options.formatSelector = formatSelector
 
     let formatCss
-    if (options.includeCssHash === true) {
+    if (userOptions.includeCssHash === true) {
       formatCss = cssHashFormatter
       options.includeCss = true
     } else if (options.includeCss === true) {
       formatCss = cssListFormatter
     }
 
-    // TODO how should we format really long selectors?
-    // TODO if a selector uses commas, put each part on a separate line
     const matches = await findMatches(styles, html, options)
     const value = stringify(matches, {formatCss}, '')
     return {value, [OBJECT_ID]: true}
