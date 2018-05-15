@@ -1,6 +1,8 @@
 # jest-css-match-serializer
 
-Take snapshots of the CSS that applies to an HTML snippet. Uses [find-css-matches](https://github.com/raingerber/find-css-matches).
+Take snapshots of the CSS that applies to an HTML snippet.
+
+Uses [find-css-matches](https://www.npmjs.com/package/find-css-matches).
 
 ## Why?
 
@@ -76,13 +78,13 @@ Returns a `findMatches` function for creating snapshots
 
 type: `string | object | array`
 
-Either a CSS string, object, or array of objects that each have a **url**, **path**, or **content** property. Objects are forwarded to [Puppeteer#addStyleTag](https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageaddstyletagoptions)
+Either a CSS string, or an object or array of objects that each have a **url**, **path**, or **content** property. Objects are forwarded to [Puppeteer#addStyleTag](https://github.com/GoogleChrome/puppeteer/blob/master/docs/api.md#pageaddstyletagoptions).
 
 **instanceOptions**
 
 type: `object`
 
-See the `findMatches#options` description
+See the [findMatches#options](#options) description.
 
 **expect**
 
@@ -126,11 +128,11 @@ Async function that's returned by `serializerFactory`. It takes an HTML string a
 
 type: `string`
 
-**options**
+#### options
 
 type: `object`
 
-These are merged into the `instanceOptions`, and the result is passed to [find-css-matches](https://github.com/raingerber/find-css-matches).
+These are merged into the `instanceOptions`, and the result is passed to [find-css-matches](https://www.npmjs.com/package/find-css-matches).
 
 **options.includePartialMatches**
 
