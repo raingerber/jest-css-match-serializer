@@ -1268,9 +1268,9 @@ fill-range@^4.0.0:
     repeat-string "^1.6.1"
     to-regex-range "^2.1.0"
 
-find-css-matches@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/find-css-matches/-/find-css-matches-1.0.0.tgz#b08ce174d552f5eb004cc3bf3ffce84a01153a92"
+find-css-matches@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/find-css-matches/-/find-css-matches-1.1.0.tgz#bb8aebab1f8f1d36d539d91ebd06b32a92e79a75"
   dependencies:
     puppeteer "^1.2.0"
 
