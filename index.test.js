@@ -96,10 +96,39 @@ describe('test with different option combinations', () => {
     }
   )
   executeFindMatchesTest(
-    'options.includeCssHash takes precedence over options.includeCss',
+    'includeCssHash takes precedence over includeCss',
     {
       includeCss: true,
       includeCssHash: true
     }
   )
+})
+
+describe('html with multiple root elements', () => {
+  it('create a snapshot with multiple roots', async () => {
+    const html = `
+      <div></div>
+      <div>
+        <div></div>
+      </div>
+      <div></div>
+      <div>
+        <span></span>
+        <span></span>
+      </div>
+    `
+    const styles = `
+      div {
+        color: red;
+      }
+    `
+    const options = {
+      recursive: true,
+      includeHtml: true,
+      includeCssHash: true,
+      includePartialMatches: false
+    }
+    const findMatches = serializerFactory(styles, options, expect)
+    expect(await findMatches(html, options)).toMatchSnapshot()
+  })
 })

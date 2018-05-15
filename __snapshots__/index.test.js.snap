@@ -1,5 +1,40 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`html with multiple root elements create a snapshot with multiple roots 1`] = `
+[0]
+<div>
+div
+fdb84ff02ab371841d8f7eb8a18b341e4010f20d
+
+[1]
+<div>
+div
+fdb84ff02ab371841d8f7eb8a18b341e4010f20d
+
+  [0]
+  <div>
+  div
+  fdb84ff02ab371841d8f7eb8a18b341e4010f20d
+
+[2]
+<div>
+div
+fdb84ff02ab371841d8f7eb8a18b341e4010f20d
+
+[3]
+<div>
+div
+fdb84ff02ab371841d8f7eb8a18b341e4010f20d
+
+  [0]
+  <span>
+  <NULL>
+
+  [1]
+  <span>
+  <NULL>
+`;
+
 exports[`test with different option combinations all options === false 1`] = `
 [0]
 #container
@@ -71,6 +106,12 @@ d762aa12d08b3083a1858ba276434c8b530f6152
       <NULL>
 `;
 
+exports[`test with different option combinations includeCssHash takes precedence over includeCss 1`] = `
+[0]
+#container
+d762aa12d08b3083a1858ba276434c8b530f6152
+`;
+
 exports[`test with different option combinations includeHtml === true 1`] = `
 [0]
 <div id="container">
@@ -136,12 +177,6 @@ exports[`test with different option combinations includePartialMatches === true 
 
       [2]
       <NULL>
-`;
-
-exports[`test with different option combinations options.includeCssHash takes precedence over options.includeCss 1`] = `
-[0]
-#container
-d762aa12d08b3083a1858ba276434c8b530f6152
 `;
 
 exports[`test with different option combinations recursive === true 1`] = `

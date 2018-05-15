@@ -35,6 +35,25 @@ function pick (keys, obj) {
 }
 
 /**
+ * stringifies an array of objects from find-css-matches
+ * @param {Array<Object>} array
+ * @param {Object} options
+ * @param {String} indent
+ * @returns {String}
+ */
+function stringifyArray (array, options, indent = '') {
+  const result = array.map((child, index) => {
+    return `${indent}[${index}]\n${stringify(child, options, indent)}`
+  }).join('\n')
+
+  if (indent === '') {
+    return result.replace(/\n$/, '')
+  }
+
+  return result
+}
+
+/**
  * stringifies an object from find-css-matches
  * @param {Object} param0
  * @param {String} param0.html
@@ -46,13 +65,7 @@ function pick (keys, obj) {
  * @returns {String}
  */
 function stringify ({html, matches, children = []}, options, indent = '') {
-  const isRoot = indent === ''
-
   let result = ''
-  if (isRoot) {
-    result += '[0]\n'
-  }
-
   if (html) {
     result += `${indent}${html}\n`
   }
@@ -77,13 +90,7 @@ function stringify ({html, matches, children = []}, options, indent = '') {
 
   if (children.length) {
     indent += INDENTATION
-    result += '\n' + children.map((child, index) => {
-      return `${indent}[${index}]\n${stringify(child, options, indent)}`
-    }).join('\n')
-  }
-
-  if (isRoot) {
-    result = result.replace(/\n$/, '')
+    result += `\n${stringifyArray(children, options, indent)}`
   }
 
   return result
@@ -116,8 +123,12 @@ function serializer (styles, instanceOptions, expect) {
       formatCss = cssListFormatter
     }
 
-    const matches = await findMatches(styles, html, options)
-    const value = stringify(matches, {formatCss}, '')
+    let matches = await findMatches(styles, html, options)
+    if (!Array.isArray(matches)) {
+      matches = [matches]
+    }
+
+    const value = stringifyArray(matches, {formatCss}, '')
     return {value, [SERIALIZER_ID]: true}
   }
 
